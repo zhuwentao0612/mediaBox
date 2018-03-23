@@ -71,11 +71,11 @@ extern "C" {
 
 #define BUTTON_START   13
 #define BUTTON_1       13
-#define BUTTON_2       14
+#define BUTTON_2       17
 #define BUTTON_3       15
 #define BUTTON_4       16
 #define BUTTON_STOP    16
-#define BUTTON_PULL    NRF_GPIO_PIN_PULLUP
+#define BUTTON_PULL    NRF_GPIO_PIN_NOPULL//NRF_GPIO_PIN_PULLUP
 
 #define BUTTONS_ACTIVE_STATE 0
 
@@ -85,13 +85,14 @@ extern "C" {
 #define BSP_BUTTON_1   BUTTON_2
 #define BSP_BUTTON_2   BUTTON_3
 #define BSP_BUTTON_3   BUTTON_4
-
+/*
 #define RX_PIN_NUMBER  8
 #define TX_PIN_NUMBER  6
 #define CTS_PIN_NUMBER 7
 #define RTS_PIN_NUMBER 5
 #define HWFC           true
-
+*/
+/*
 #define SPIS_MISO_PIN   28  // SPI MISO signal.
 #define SPIS_CSN_PIN    12  // SPI CSN signal.
 #define SPIS_MOSI_PIN   25  // SPI MOSI signal.
@@ -168,7 +169,7 @@ extern "C" {
 #define ARDUINO_A3_PIN              29    // Analog channel 3
 #define ARDUINO_A4_PIN              30    // Analog channel 4
 #define ARDUINO_A5_PIN              31    // Analog channel 5
-
+*/
 // Low frequency clock source to be used by the SoftDevice
 #define NRF_CLOCK_LFCLKSRC      {.source       = NRF_CLOCK_LF_SRC_XTAL,      \
                                  .rc_ctiv      = 0,                          \

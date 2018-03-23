@@ -104,6 +104,7 @@
 #define UART_TX_BUF_SIZE                256                                         /**< UART TX buffer size. */
 #define UART_RX_BUF_SIZE                256                                         /**< UART RX buffer size. */
 
+#define LDO_ENABLE_CPU 	                14
 
 BLE_NUS_DEF(m_nus);                                                                 /**< BLE NUS service instance. */
 NRF_BLE_GATT_DEF(m_gatt);                                                           /**< GATT module instance. */
@@ -331,6 +332,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 {
     uint32_t err_code;
 
+		NRF_LOG_INFO("p_ble_evt->header.evt_id = %d",p_ble_evt->header.evt_id);
     switch (p_ble_evt->header.evt_id)
     {
         case BLE_GAP_EVT_CONNECTED:
@@ -521,6 +523,10 @@ void bsp_event_handler(bsp_event_t event)
                 }
             }
             break;
+				case BSP_EVENT_KEY_2:
+						NRF_LOG_INFO("clear LDO_ENABLE_CPU\r\n");
+						nrf_gpio_pin_clear(LDO_ENABLE_CPU);
+            break;
 
         default:
             break;
@@ -584,7 +590,7 @@ void uart_event_handle(app_uart_evt_t * p_event)
 /**@brief  Function for initializing the UART module.
  */
 /**@snippet [UART Initialization] */
-static void uart_init(void)
+/*static void uart_init(void)
 {
     uint32_t                     err_code;
     app_uart_comm_params_t const comm_params =
@@ -606,6 +612,7 @@ static void uart_init(void)
                        err_code);
     APP_ERROR_CHECK(err_code);
 }
+*/
 /**@snippet [UART Initialization] */
 
 
@@ -675,11 +682,18 @@ static void power_manage(void)
     APP_ERROR_CHECK(err_code);
 }
 
+void ldo_enable()
+{
+		nrf_gpio_cfg_output(LDO_ENABLE_CPU); 
+		nrf_gpio_pin_set(LDO_ENABLE_CPU);	
+}
 
 /**@brief Application main function.
  */
 int main(void)
 {
+		ldo_enable();
+	
     uint32_t err_code;
     bool     erase_bonds;
 
@@ -687,7 +701,7 @@ int main(void)
     err_code = app_timer_init();
     APP_ERROR_CHECK(err_code);
 
-    uart_init();
+    //uart_init();
     log_init();
 
     buttons_leds_init(&erase_bonds);
@@ -698,12 +712,13 @@ int main(void)
     advertising_init();
     conn_params_init();
 
-    printf("\r\nUART Start!\r\n");
+    //printf("\r\nUART Start!\r\n");
     NRF_LOG_INFO("UART Start!");
     err_code = ble_advertising_start(&m_advertising, BLE_ADV_MODE_FAST);
     APP_ERROR_CHECK(err_code);
 
     // Enter main loop.
+	
     for (;;)
     {
         UNUSED_RETURN_VALUE(NRF_LOG_PROCESS());
