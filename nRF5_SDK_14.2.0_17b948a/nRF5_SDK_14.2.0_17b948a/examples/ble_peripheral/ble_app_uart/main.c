@@ -67,6 +67,10 @@
 #include "app_uart.h"
 #include "app_util_platform.h"
 #include "bsp_btn_ble.h"
+#include "nrf_delay.h"
+#include "adc.h"
+#include "pwm.h"
+#include "oled.h"
 
 #if defined (UART_PRESENT)
 #include "nrf_uart.h"
@@ -105,6 +109,10 @@
 #define UART_RX_BUF_SIZE                256                                         /**< UART RX buffer size. */
 
 #define LDO_ENABLE_CPU 	                14
+#define CHARGE_OK				 								12    				//charge full pin
+#define KEY				 								      6			
+#define KEY2				 								    9				
+
 
 BLE_NUS_DEF(m_nus);                                                                 /**< BLE NUS service instance. */
 NRF_BLE_GATT_DEF(m_gatt);                                                           /**< GATT module instance. */
@@ -117,6 +125,9 @@ static ble_uuid_t m_adv_uuids[]          =                                      
     {BLE_UUID_NUS_SERVICE, NUS_SERVICE_UUID_TYPE}
 };
 
+float vol;
+uint8_t vol8DispArry[20] = {0};
+volatile uint8_t battery_level;	
 
 /**@brief Function for assert macro callback.
  *
@@ -498,6 +509,7 @@ void gatt_init(void)
  */
 void bsp_event_handler(bsp_event_t event)
 {
+	  //SEGGER_RTT_printf(0,"KEY TEST\r\n");
     uint32_t err_code;
     switch (event)
     {
@@ -524,8 +536,20 @@ void bsp_event_handler(bsp_event_t event)
             }
             break;
 				case BSP_EVENT_KEY_2:
-						NRF_LOG_INFO("clear LDO_ENABLE_CPU\r\n");
+						SEGGER_RTT_printf(0,"clear LDO_ENABLE_CPU\r\n");
 						nrf_gpio_pin_clear(LDO_ENABLE_CPU);
+            break;
+				case BSP_EVENT_KEY_1:
+						SEGGER_RTT_printf(0,"KEY2 PUSHED\r\n");
+						pwm_work_short();
+            break;
+				case BSP_EVENT_KEY_PUSH:
+						SEGGER_RTT_printf(0,"KEY PUSH\r\n");
+						pwm_work_short();
+						break;
+				case BSP_EVENT_KEY_RELEASE:
+						SEGGER_RTT_printf(0,"KEY RELEASE\r\n");
+						pwm_work_short();
             break;
 
         default:
@@ -688,6 +712,77 @@ void ldo_enable()
 		nrf_gpio_pin_set(LDO_ENABLE_CPU);	
 }
 
+void battery_sample()
+{
+		adc_init();   //init adc
+		nrf_delay_ms(5);
+
+		int16_t vol_adc_tmp[10];
+		for(int i = 0; i < 10; i++)
+		{
+				vol_adc_tmp[i] = adc_convert();
+		}
+		int16_t sum_adc = 0;
+		for(int j = 0; j < 10; j++)
+		{
+				sum_adc += vol_adc_tmp[j] ;
+		}
+		float vol_adc = sum_adc/10;
+		
+		adc_uninit();
+		nrf_delay_ms(5);
+		
+		vol = vol_adc ; //* 4.4 / 4096;
+		sprintf((char *)vol8DispArry, "%1.3f", vol);
+		SEGGER_RTT_printf(0, "vol = %s\r\n",vol8DispArry);
+	
+		
+				
+		if(vol >= 960) 
+				battery_level = 100;											//4.2V
+		else if((vol >= 950) && (vol < 960))
+				battery_level = 95;
+		else if((vol >= 938) && (vol < 950))  	
+				battery_level = 90;												//4.0V
+		else if((vol >= 925) && (vol < 938))  	
+				battery_level = 85;
+		else if((vol >= 912) && (vol < 925))  	
+				battery_level = 80;                       //3.92V
+		else if((vol >= 905) && (vol < 912))  	
+				battery_level = 75;
+		else if((vol >= 899) && (vol < 905))  
+				battery_level = 70;                       //3.84V
+		else if((vol >= 890) && (vol < 899))  
+				battery_level = 65;
+		else if((vol >= 882) && (vol < 890))  
+				battery_level = 60;                       //3.78V
+		else if((vol >= 875) && (vol < 882))  
+				battery_level = 55;
+		else if((vol >= 870) && (vol < 875))  
+				battery_level = 50;                       //3.72V
+		else if((vol >= 864) && (vol < 870))  
+				battery_level = 45;
+		else if((vol >= 859) && (vol < 864))  
+				battery_level = 40;                        //3.68V
+		else if((vol >= 853) && (vol < 859))  
+				battery_level = 35;
+		else if((vol >= 848) && (vol < 853))  
+				battery_level = 30;                        //3.64V
+		else if((vol >= 843) && (vol < 848))  
+				battery_level = 25;
+		else if((vol > 838) && (vol <= 843))  
+				battery_level = 20;                        //3.60V
+		else if((vol > 830) && (vol <= 838))  
+				battery_level = 15;
+		else if((vol > 750) && (vol <= 830)) 									
+				battery_level = 10;                        //3.55V
+		else if(vol <= 750) 
+				battery_level = 5;
+				
+		SEGGER_RTT_printf(0, "battery_level = %d\r\n",battery_level);
+			
+}
+
 /**@brief Application main function.
  */
 int main(void)
@@ -712,17 +807,20 @@ int main(void)
     advertising_init();
     conn_params_init();
 
-    //printf("\r\nUART Start!\r\n");
-    NRF_LOG_INFO("UART Start!");
     err_code = ble_advertising_start(&m_advertising, BLE_ADV_MODE_FAST);
     APP_ERROR_CHECK(err_code);
+		
+		//test_rtc_init();
+		
+		Reset_IC_OLED();
+		Init_IC_OLED();
+		All_Screen(); 
 
     // Enter main loop.
-	
     for (;;)
     {
-        UNUSED_RETURN_VALUE(NRF_LOG_PROCESS());
-        power_manage();
+			  SEGGER_RTT_printf(0, "main loop\r\n");			  
+				nrf_delay_ms(100);
     }
 }
 

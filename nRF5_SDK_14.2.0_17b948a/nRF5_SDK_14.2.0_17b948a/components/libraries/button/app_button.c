@@ -44,7 +44,7 @@
 #include "app_error.h"
 #include "nrf_drv_gpiote.h"
 #include "nrf_assert.h"
-
+#include "nrf_log.h"
 
 static app_button_cfg_t const *       mp_buttons = NULL;           /**< Button configuration. */
 static uint8_t                        m_button_count;              /**< Number of configured buttons. */
@@ -70,7 +70,6 @@ static uint32_t m_pin_transition;
 static void detection_delay_timeout_handler(void * p_context)
 {
     uint8_t i;
-
     // Pushed button(s) detected, execute button handler(s).
     for (i = 0; i < m_button_count; i++)
     {

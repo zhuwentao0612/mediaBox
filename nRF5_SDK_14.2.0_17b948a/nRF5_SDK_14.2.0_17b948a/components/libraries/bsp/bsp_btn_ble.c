@@ -230,6 +230,22 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 
 NRF_SDH_BLE_OBSERVER(m_ble_observer, BSP_BTN_BLE_OBSERVER_PRIO, ble_evt_handler, NULL);
 
+uint32_t my_buttons_configure()  //changhong add 20180515
+{
+    uint32_t err_code;
+
+    err_code = bsp_event_to_button_action_assign(0,
+                                                 BSP_BUTTON_ACTION_RELEASE,
+                                                 BSP_EVENT_KEY_RELEASE);
+    RETURN_ON_ERROR_NOT_INVALID_PARAM(err_code);
+	
+		err_code = bsp_event_to_button_action_assign(0,
+                                                 BSP_BUTTON_ACTION_PUSH,
+                                                 BSP_EVENT_KEY_PUSH);
+    RETURN_ON_ERROR_NOT_INVALID_PARAM(err_code);
+	
+    return NRF_SUCCESS;
+}
 
 uint32_t bsp_btn_ble_init(bsp_btn_ble_error_handler_t error_handler, bsp_event_t * p_startup_bsp_evt)
 {
@@ -247,5 +263,6 @@ uint32_t bsp_btn_ble_init(bsp_btn_ble_error_handler_t error_handler, bsp_event_t
         err_code = advertising_buttons_configure();
     }
 
+		my_buttons_configure(); //changhong add 20180515
     return err_code;
 }

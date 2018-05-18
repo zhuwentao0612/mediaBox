@@ -73,11 +73,11 @@ static void bsp_button_event_handler(uint8_t pin_no, uint8_t button_action);
 static const app_button_cfg_t app_buttons[BUTTONS_NUMBER] =
 {
     #ifdef BSP_BUTTON_0
-    {BSP_BUTTON_0, false, BUTTON_PULL, bsp_button_event_handler},
+    {BSP_BUTTON_0, false, /*BUTTON_PULL*/NRF_GPIO_PIN_PULLDOWN, bsp_button_event_handler},
     #endif // BUTTON_0
 
     #ifdef BSP_BUTTON_1
-    {BSP_BUTTON_1, false, BUTTON_PULL, bsp_button_event_handler},
+    {BSP_BUTTON_1, false, /*BUTTON_PULL*/NRF_GPIO_PIN_PULLDOWN, bsp_button_event_handler},
     #endif // BUTTON_1
 
     #ifdef BSP_BUTTON_2
@@ -158,7 +158,7 @@ static void bsp_button_event_handler(uint8_t pin_no, uint8_t button_action)
                 event = m_events_list[button].long_push_event;
         }
     }
-
+	
     if ((event != BSP_EVENT_NOTHING) && (m_registered_callback != NULL))
     {
         m_registered_callback(event);
